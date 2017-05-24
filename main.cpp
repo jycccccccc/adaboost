@@ -12,14 +12,7 @@ IdxHeader idx;
 
 
 //==================================================================
-//函数名：  sort
-//作者：    qiurenbo
-//日期：    2014-11-25
-//功能：    冒泡排序
-//输入参数：double a[]
-//			n	数组长度
-//返回值：  无
-//修改记录：
+//sort
 //==================================================================
 void sort(double a[], int n)
 {
@@ -39,13 +32,7 @@ void sort(double a[], int n)
 }
 
 //==================================================================
-//函数名：  countFeature
-//作者：    qiurenbo
-//日期：    2014-11-25
-//功能：    计算一行上有多少特征
-//输入参数：char* buf 文本的一行
-//返回值：  特征个数
-//修改记录：
+//countFeature
 //==================================================================
 int countFeature(const char* buf)
 {
@@ -62,13 +49,7 @@ int countFeature(const char* buf)
 }
 
 //==================================================================
-//函数名：  setFeature
-//作者：    qiurenbo
-//日期：    2014-11-25
-//功能：    将读取的特征分配到正负样本结构体上
-//输入参数：char* buf 文本的一行
-//返回值：  无
-//修改记录：
+//setFeature
 //==================================================================
 void setFeature(char* buf)
 {
@@ -101,7 +82,6 @@ void setFeature(char* buf)
 	else
 		assert(0);
 
-	//idx 每行是所有样本的同一特征
 	for (i = 0; i < sampleHeader.featureNum; i++)
 		idx.feature[i][idx.samplesNum] = sample.feature[i];
 
@@ -113,13 +93,7 @@ void setFeature(char* buf)
 
 
 //==================================================================
-//函数名：  loadData
-//作者：    qiurenbo
-//日期：    2014-11-25
-//功能：    读取文本数据
-//输入参数：char* buf 文本的一行
-//返回值：  无
-//修改记录：
+//loadData
 //==================================================================
 void loadData()
 {
@@ -131,9 +105,6 @@ void loadData()
 	int i = 0;
 	int n = 0;
 
-	//fp = fopen(DATA_NAME, "r");
-	//assert(fp);
-
 	fopen_s(&fp, DATA_NAME, "r");
 
 
@@ -141,20 +112,14 @@ void loadData()
 	idx.featureNum = sampleHeader.featureNum = countFeature(buf);
 
 	setFeature(buf);
-	//统计样本数
-	//printf("begin2\n");
 
 	while (!feof(fp))
 	{
 	
 		fgets(buf, 1000, fp);
 		setFeature(buf);
-		//n = n + 1;
-		//printf("%d\n",n);
 	
 	}
-
-	//printf("begin3\n");
 
 	fclose(fp);
 
@@ -169,13 +134,7 @@ void loadData()
 
 
 //==================================================================
-//函数名：  CreateStump
-//作者：    qiurenbo
-//日期：    2014-11-26
-//功能：    创建一个stump分类器
-//输入参数：无
-//返回值：  stump
-//修改记录：
+//CreateStump
 //==================================================================
 Stump CreateStump()
 {
@@ -198,7 +157,6 @@ Stump CreateStump()
 			err = 0;
 			double rootFeature = idx.feature[i][j];
 
-			//跳过相同的值
 			if (pre == rootFeature)
 				continue;
 
@@ -215,11 +173,9 @@ Stump CreateStump()
 
 			}
 
-			//左边是1，还是右边是1，选取error最小的组合
 			flipErr = 1 - err;
 			err = err < flipErr ? err : flipErr;
 
-			//选取具有最小err的特征rootFeature
 			if (err < min)
 			{
 				min = err;
@@ -249,20 +205,13 @@ Stump CreateStump()
 
 
 //==================================================================
-//函数名：  reSetWeight
-//作者：    qiurenbo
-//日期：    2014-11-26
-//功能：    每次迭代重新调整权重
-//输入参数：stump
-//返回值：  无
-//修改记录：
+//reSetWeight
 //==================================================================
 void reSetWeight(struct Stump stump)
 {
 	int i;
 	double z = 0;
 
-	//计算规范化因子z
 	for (i = 0; i < sampleHeader.samplesNum; i++)
 	{
 		double feature = (sampleHeader.samples[i]).feature[stump.fIdx];
@@ -274,7 +223,6 @@ void reSetWeight(struct Stump stump)
 
 
 
-	//调整各个样本的权值
 	for (i = 0; i < sampleHeader.samplesNum; i++)
 	{
 		double feature = (sampleHeader.samples[i]).feature[stump.fIdx];
@@ -285,32 +233,10 @@ void reSetWeight(struct Stump stump)
 
 
 	}
-
-#ifdef DEBUG
-
-	//debug
-	for (i = 0; i < 10; i++)
-	{
-		double feature = (sampleHeader.samples[i]).feature[stump.fIdx];
-		double rs = feature < stump.ft ? stump.left : stump.right;
-		rs = stump.alpha * rs * sampleHeader.samples[i].indicate;
-		printf("weight:%lf, rs:%lf\n", sampleHeader.samples[i].weight, rs);
-	}
-
-
-	//getchar();
-
-#endif
 }
 
 //==================================================================
-//函数名：  AdaBoost
-//作者：    qiurenbo
-//日期：    2014-11-26
-//功能：    adaboost训练弱分类器
-//输入参数：interation  迭代次数
-//返回值：  无
-//修改记录：
+//AdaBoost
 //==================================================================
 void AdaBoost(int interation)
 {
@@ -322,7 +248,6 @@ void AdaBoost(int interation)
 
 	loadData();
 
-	//设置初始样本权重
 	for (i = 0; i < sampleHeader.samplesNum; i++)
 		sampleHeader.samples[i].weight = 1.0 / sampleHeader.samplesNum;
 
@@ -331,7 +256,6 @@ void AdaBoost(int interation)
 	pCls = head.classifier;
 	pCls->stump = CreateStump();
 	reSetWeight(pCls->stump);
-	//printf("completed:%lf%%\r", 1.0/head.classifierNum*100);
 	printf("+-----------+--+-------+\n");
 	printf("|   alpha   |id|  ft   |\n");
 	printf("+-----------+--+-------+\n");
@@ -346,7 +270,6 @@ void AdaBoost(int interation)
 		reSetWeight(pCls->stump);
 		printf("|%.9lf|%2d|%+.4lf|\n", pCls->stump.alpha, pCls->stump.fIdx, pCls->stump.ft);
 		printf("+-----------+--+-------+\n");
-		//printf("completed:%lf%%\r", 1.0*(i+1)/head.classifierNum*100);
 
 	}
 
